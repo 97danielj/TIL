@@ -121,9 +121,13 @@ pos_tag(t_t) #토큰화된 리스트의 각 원소에 품사 태그 붙인다.
   - EX2) Since I'm actively looking for Ph.D. students, I get the same question a dozen times every year.
 
 - ```python
+  #문장 토큰화기(영어)
   from nltk.tokenize import sent_tokenize
-  #문장 토큰화기
   sent_tokenize(t3)
+  
+  #문장 토큰화기(한글)
+  import kss #Korean Sentence Spliter
+  kss.split_sentences(text
   ```
 
 
@@ -290,7 +294,194 @@ from nltk.stem import LancasterStemmer
 ```python
 from nltk.corpus import stopwords #불용어 패키지 인풋
 stop_words_list = stopwords.words('english') #영어 불용어 사전 호출
+len(stop_words_list)
 ```
 
 
+
+
+
+## 9. 정규표현식
+
+- 스크레핑에서 학습한 정규표현식을 확인
+
+| 메타문자 |                             의미                             |
+| :------: | :----------------------------------------------------------: |
+|    .     |         한개의 임의의 문자를 나타냅니다.('\n 제외')          |
+|    ?     |  앞의 문자가 존재 할수도 있거, 존재하진 않을 수도 있습니다.  |
+|    *     |             앞의 문자가 무한개로 존재 또는 존재X             |
+|    []    | 대괄호 안의 문자들 중 한개의 문자와 매치<br />[a-z]와 같이 범위를 지정할 수도 있습니다. |
+| [^문자]  |            해당 문자를 제외한 문자를 매치합니다.             |
+|   AIB    |                  A또는 B의 의미를 가집니다                   |
+|    \d    |                      숫자와 매치. [0-9]                      |
+|    \D    |                    숫자가 아닌 것과 매치                     |
+|    \s    |                      whitespace와 매치                       |
+|    \w    |                       문자+숫자와 매치                       |
+|    \W    |                     특수문자+공백과 매치                     |
+
+
+
+- 정규표현식 모듈 함수
+
+|     함수      |                             기능                             |
+| :-----------: | :----------------------------------------------------------: |
+| re.compile()  |     정규표현식을 컴파일하는 함수입니다.(패턴으로 컴파일)     |
+|  re.search()  |  문자열 전체에 대해서 정규표현식과 매치되는지를 검색합니다   |
+|  re.match()   |     문자열의 처음이 정규표현식과 매치되는지를 검색합니다     |
+|  re.split()   | 정규 표현식을 기준으로 문자열을 분리하여 리스트로 리턴합니다. |
+| re.findall()  | 문자열에서 정규 표현식과 매치되는 모든 경우의 문자열을 찾아서 리스트로 리턴합니다. 만약, 매치되는 문자열이 없다면 빈 리스트가 리턴됩니다. |
+| re.finditer() | 문자열에서 정규 표현식과 매치되는 모든 경우의 문자열에 대한 이터레이터 객체를 리턴합니다. 이터레이블 객체를 반환 |
+|   re.sub()    | 문자열에서 정규 표현식과 일치하는 부분에 대해서 다른 문자열로 대체합니다 |
+
+```python
+from nltk.tokenize import RegexpTokenizer
+ck1=RegexpTokenizer('[\w]+') #정규표현식 토튼화기
+ck1.tokenize(t)
+```
+
+
+
+## 10. 정수 인코딩(Integer Encoding)
+
+- 각 단어를 고유한 정수에 맵핑시키는 전처리 작업
+
+- 단어를 빈도수 순으로 정렬한 단어 집합을 만들고, 빈도수가 높은 순서로 낮은 정수를 부여
+
+- ### 1. Dictonary : 사용자가 직접 빈도수 계산
+
+```python
+단어_모음={} #정수 인코딩(맵핑)하기 위한 빈도수 딕셔너리
+pr_data=[]
+불용성단어 = set(stopwords.words('english'))
+for 문장 in 문장_토큰화_리스트: #한 문장식
+    단어_토큰화_리스트 = word_tokenize(문장)
+    l=[]
+    for 단어 in 단어_토큰화_리스트:
+        소문자화_된_단어 = 단어.lower() # 정규화2
+        if 소문자화_된_단어 not in 불용성단어:
+            if len(소문자화_된_단어) > 2: #단어수 2이하 제거. 노이즈제거
+                l.append(소문자화_된_단어)# 전처리된 단어
+                if 소문자화_된_단어 not in 단어_모음:
+                    단어_모음[소문자화_된_단어] = 0 #빈도수 딕셔너리에 단어 초기화
+                단어_모음[소문자화_된_단어]+=1
+    #한 문장을 다 돌았다면 문장 전처리 단어 l을 pr_data에 추가
+    pr_data.append(l)
+pr_data
+```
+
+
+
+- ### 2. Counter
+
+  - Counter 모듈을 사용.
+  - 중복은 제거하고 단어의 빈도수를 기록한다.
+  - Counter 객체로 반환
+
+```python
+단어_모음집 = sum(pr_data,[]) #일차원 리스트
+단어_모음집
+
+결과_단어_모음집=Counter(단어_모음집) #중복은제고 단어의 빈도수를 기록
+결과_단어_모음집
+
+top=4 #빈도수중 상위 5개 
+빈도수별_단어=결과_단어_모음집.most_common(top)
+빈도수별_단어
+
+단어_인덱스2={} #빈도수가 높을 수록 낮은 정수 인덱스 부여
+i=0
+for 단어,빈도수 in 빈도수별_단어:
+    i+=1
+    단어_인덱스2[단어]=i
+단어_인덱스2
+
+#Tip) 텍스트 매핑시 존재 하지 않는 단어에 대해서 OOV에러가 날수도 있으니 정수_인덱스['OOV'] = len(정수_인덱스)+1
+```
+
+- ### 3. NLTK 정수인코딩(FreeDist)
+  
+  - nltk에서 빈도수 계산 도구 FreeDist()
+
+```python
+from nltk import FreqDist
+import numpy as np
+# np.hstack으로 문장 구분을 제거
+단어_모음=FreqDist(np.hstack(pr_data)) #빈도수 계산 도구 =Counter랑 비슷
+단어_모음 #각 원소(리스트)에 대해 옆으로 붙이기. 1차원 리스트로 사용
+```
+
+- ### 4. Keras의 텍스트 전처리
+  
+  - 케라스는 기본적인 전처리를 위한 도구들을 제공한다.
+
+```python
+from tensorflow.keras.preprocessing.text import Tokenizer
+preprocessed_sentences #앞서 문장과 단어 토큰화된 데이터
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(preprocessed_sentences) 
+# fit_on_texts()안에 코퍼스를 입력으로 하면 빈도수를 기준으로 단어 집합을 생성.
+#빈도수 높은 순으로 낮은 정수 인덱스를 부여
+print(ck_t.word_index) #생성된 정수_인덱스
+
+ck_t.word_counts #OrederedDict()
+print(tokenizer.texts_to_sequences(preprocessed_sentences))
+#입력으로 들어온 코퍼스에 대해서 각 단어를 이미 정해진 인덱스로 변환합니다.
+
+vocab_size = 5
+tokenizer = Tokenizer(num_words = vocab_size + 1)
+# 상위 5개 단어만 사용
+#num_words에 +1하는 이유는 num_words는 숫자를 0부터 카운트 합니다.
+#정수 인덱스 0이 존재하지 않는데 단어 집합의 산정 이유는 패딩이라는 작업떄문에
+tokenizer.fit_on_texts(preprocessed_sentences) #컴파일
+tokenizer.texts_to_sequences(preprocessed_sentences) #실제 적용
+#만약 oov_token을 사용하기로 했다면 케라스 토크나이저는 기본적으로 'OOV'의 인덱스를 1로 합니다.
+```
+
+
+
+## 11. 패딩(Padding)
+
+- 병렬 연산을 위해서 여러 문장의 길이를 임의로 동일하게 맞춰주는 작업
+- 하나의 행렬로 만듬
+- 기준 길이는 토큰화된 행렬에서 가장 긴 문장의 길이로 맞춘다.
+- 채워주는 단어(가상의 단어)는 'PAD'라는 0번 정수 인덱스를 가지는 가상 단어를 사용
+
+### 1. numpy 패딩
+
+```python
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(preprocessed_sentences)
+encoded = tokenizer.texts_to_sequences(preprocessed_sentences)
+#인코딩
+
+#최대길이
+max_len = max(len(item) for item in encoded)
+
+#제로패딩 : 0을 채워서 데이터의 크기를 조정
+```
+
+### 2. 케라스 전처리 도구로 패딩하기
+
+- 기본적으로 앞에 0을 채운다.
+- 앞에 채우고 싶으면 padding = 'post'
+
+```python
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+#케라스는 패딩을 위한 pad_sequence()를 제공하고 있습니다.
+
+tk = Tokenizer()
+tk.fit_on_texts(pr_data) #정수 인덱스 사전
+encoded = tk.texts_to_sequences(pr_data) #인코딩
+encoded
+
+end_data=pad_sequences(encoded,padding='post') #encoded리스트를 행렬로 패딩. 기존데이터는 전방에
+end_data
+
+#뒤에서 단어 삭제
+end_data2=pad_sequences(encoded,padding='post',truncating='post', maxlen=5)
+#padding값을 바꿀시 존재하는 정수 인덱스와 겹치치 않게 정수를 부여한 후 value=v로 함수에 전달.
+```
 
