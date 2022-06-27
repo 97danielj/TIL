@@ -79,7 +79,7 @@ array([[0., 0., 4.]])
 
 
 
-### 2-1. CountVectorizer 
+### 2. CountVectorizer 
 
 - `CountVectorizer`는 `feature_extraction.text` 서브패키지에서 제공한다.
 - 사이킷 런에서 단어의 빈도를 Count하여 Vector로 만드는 CountVectorizer클래스 지원
