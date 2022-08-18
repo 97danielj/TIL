@@ -4,7 +4,7 @@
 
 케라스의 SimpleRNN과 LSTM을 이해해봅니다.
 
-# 1. 임의의 입력 생성하기
+## 1. 임의의 입력 생성하기
 
 ```python
 import numpy as np
@@ -44,7 +44,7 @@ print(train_X.shape)
   
   
 
-# 2. SimpleRNN 이해하기
+## 2. SimpleRNN 이해하기
 
 위에서 생성한 데이터를 SimpleRNN의 입력으로 사용하여 SimpleRNN의 출력값을 이해해보겠습니다. SimpleRNN에는 여러 인자가 있으며 대표적인 인자로 return_sequences와 return_state가 있습니다. 기본값으로는 둘 다 False로 지정되어져 있으므로 별도 지정을 하지 않을 경우에는 False로 처리됩니다. 우선, 은닉 상태의 크기를 3으로 지정하고, 두 인자 값이 모두 False일 때의 출력값을 보겠습니다.
 
@@ -102,7 +102,7 @@ last hidden state : [[-0.5144398  -0.5037417   0.96605766]], shape: (1, 3)
 
 
 
-# 3. LSTM 이해하기
+## 3. LSTM 이해하기
 
 실제로 SimpleRNN이 사용되는 경우는 거의 없습니다. 이보다는 LSTM이나 GRU을 주로 사용하는데, 이번에는 임의의 입력에 대해서 LSTM을 사용할 경우를 보겠습니다. 우선 return_sequences를 False로 두고, return_state가 True인 경우를 봅시다.
 
@@ -142,3 +142,69 @@ last cell state : [[ 0.02635545  1.1380005  -0.37377644]], shape: (1, 3)
 ```
 
 return_state가 True이므로 두번째 출력값이 마지막 은닉 상태, 세번째 출력값이 마지막 셀 상태인 것은 변함없지만 return_sequences가 True이므로 첫번째 출력값은 모든 시점의 은닉 상태가 출력됩니다.
+
+## 3. Bidirectional(LSTM) 이해하기
+
+난이도를 조금 올려서 양방향 LSTM의 출력값을 확인해보겠습니다. return_sequences가 True인 경우와 False인 경우에 대해서 은닉 상태의 값이 어떻게 바뀌는지 직접 비교하기 위해서 이번에는 출력되는 은닉 상태의 값을 고정시켜주겠습니다.
+
+```python
+k_init = tf.keras.initializers.Constant(value=0.1)
+b_init = tf.keras.initializers.Constant(value=0)
+r_init = tf.keras.initializers.Constant(value=0.1)
+```
+
+우선 return_sequences가 False이고, return_state가 True인 경우입니다.
+
+```python
+bilstm = Bidirectional(LSTM(3, return_sequences=False, return_state=True, \
+                            kernel_initializer=k_init, bias_initializer=b_init, recurrent_initializer=r_init))
+hidden_states, forward_h, forward_c, backward_h, backward_c = bilstm(train_X)
+
+print('hidden states : {}, shape: {}'.format(hidden_states, hidden_states.shape))
+print('forward state : {}, shape: {}'.format(forward_h, forward_h.shape))
+print('backward state : {}, shape: {}'.format(backward_h, backward_h.shape))
+```
+
+```tex
+hidden states : [[0.6303139  0.6303139  0.6303139  0.70387346 0.70387346 0.70387346]], shape: (1, 6)
+forward state : [[0.6303139 0.6303139 0.6303139]], shape: (1, 3)
+backward state : [[0.70387346 0.70387346 0.70387346]], shape: (1, 3)
+```
+
+이번에는 무려 5개의 값을 반환합니다. return_state가 True인 경우에는 정방향 LSTM의 은닉 상태와 셀 상태, 역방향 LSTM의 은닉 상태와 셀 상태 4가지를 반환하기 때문입니다. 다만, 셀 상태는 각각 forward_c와 backward_c에 저장만 하고 출력하지 않았습니다. 첫번째 출력값의 크기가 (1, 6)인 것에 주목합시다. 이는 return_sequences가 False인 경우 정방향 LSTM의 마지막 시점의 은닉 상태와 역방향 LSTM의 첫번째 시점의 은닉 상태가 연결된 채 반환되기 때문입니다. 그림으로 표현하면 아래와 같이 연결되어 다음층에서 사용됩니다.
+
+![img](https://wikidocs.net/images/page/94748/bilstm3.PNG)
+
+마찬가지로 return_state가 True인 경우에 반환한 은닉 상태의 값인 forward_h와 backward_h는 각각 정방향 LSTM의 마지막 시점의 은닉 상태와 역방향 LSTM의 첫번째 시점의 은닉 상태값입니다. 그리고 이 두 값을 연결한 값이 hidden_states에 출력되는 값입니다. 이를 이용한 실습은 'RNN을 이용한 텍스트 분류 챕터'에서의 한국어 스팀 리뷰 분류하기 실습( https://wikidocs.net/94748 )을 참고하세요.
+
+정방향 LSTM의 마지막 시점의 은닉 상태값과 역방향 LSTM의 첫번째 은닉 상태값을 기억해둡시다.
+
+- 정방향 LSTM의 마지막 시점의 은닉 상태값 : [0.6303139 0.6303139 0.6303139]
+- 역방향 LSTM의 첫번째 시점의 은닉 상태값 : [0.70387346 0.70387346 0.70387346]
+
+현재 은닉 상태의 값을 고정시켜두었기 때문에 return_sequences를 True로 할 경우, 출력이 어떻게 바뀌는지 비교가 가능합니다.
+
+```python
+bilstm = Bidirectional(LSTM(3, return_sequences=True, return_state=True, \
+                            kernel_initializer=k_init, bias_initializer=b_init, recurrent_initializer=r_init))
+hidden_states, forward_h, forward_c, backward_h, backward_c = bilstm(train_X)
+print('hidden states : {}, shape: {}'.format(hidden_states, hidden_states.shape))
+print('forward state : {}, shape: {}'.format(forward_h, forward_h.shape))
+print('backward state : {}, shape: {}'.format(backward_h, backward_h.shape))
+```
+
+```tex
+hidden states : [[[0.3590648  0.3590648  0.3590648  0.70387346 0.70387346 0.70387346]
+  [0.5511133  0.5511133  0.5511133  0.5886358  0.5886358  0.5886358 ]
+  [0.5911575  0.5911575  0.5911575  0.39516988 0.39516988 0.39516988]
+  [0.6303139  0.6303139  0.6303139  0.21942243 0.21942243 0.21942243]]], shape: (1, 4, 6)
+forward state : [[0.6303139 0.6303139 0.6303139]], shape: (1, 3)
+backward state : [[0.70387346 0.70387346 0.70387346]], shape: (1, 3)
+```
+
+hidden states의 출력값에서는 이제 모든 시점의 은닉 상태가 출력됩니다. 역방향 LSTM의 첫번째 시점의 은닉 상태는 더 이상 정방향 LSTM의 마지막 시점의 은닉 상태와 연결되는 것이 아니라 정방향 LSTM의 첫번째 시점의 은닉 상태와 연결됩니다.
+
+그림으로 표현하면 다음과 같이 연결되어 다음층의 입력으로 사용됩니다.
+
+![img](https://wikidocs.net/images/page/94748/bilstm1.PNG)
+
