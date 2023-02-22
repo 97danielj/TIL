@@ -494,6 +494,9 @@ def sentence_generation(model, tokenizer, current_word, n): # 모델, 토크나�
 
 ```bash
 print(sentence_generation(model, tokenizer, 'i', 10))
+```
+
+```scss
 i disapprove of school vouchers can i still apply for them
 ```
 
@@ -501,5 +504,9 @@ i disapprove of school vouchers can i still apply for them
 
 ```bash
 print(sentence_generation(model, tokenizer, 'how', 10))
+```
+
+```scss
 how to make facebook more accountable will so your neighbor chasing
 ```
+

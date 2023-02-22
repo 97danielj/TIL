@@ -441,8 +441,14 @@ def sentence_generation(model, char_to_index, seq_length, seed_text, n):
     # n번의 다음 문자 예측이 끝나면 최종 완성된 문장을 리턴.
     sentence = init_text + sentence
     return sentence
+```
+
+```python
 print(sentence_generation(model, char_to_index, 10, 'I get on w', 80))
-I get on with life as a programmer, I like to hang out with programming and deep learning.
+```
+
+```tex
+how to make facebook more accountable will so your neighbor chasing
 ```
 
 두 개의 문장이 출력되었습니다. 이 두 문장은 훈련 데이터에서는 연속적으로 나온 적이 없는 두 문장임에도 모델이 임의로 생성해냈습니다.
